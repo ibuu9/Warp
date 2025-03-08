@@ -33,21 +33,23 @@ RUN mkdir -p /var/lib/cloudflare-warp \
     && chmod 600 /var/lib/cloudflare-warp/settings.json \
     && chmod 600 /var/lib/cloudflare-warp/consumer-settings.json
 
-# Configure Dante SOCKS5 proxy
-RUN echo -e "logoutput: syslog\n\
-internal: 0.0.0.0 port = 1080\n\
-external: eth0\n\
-method: username\n\
-user.privileged: root\n\
-user.notprivileged: nobody\n\
-client pass {\n\
-    from: 0.0.0.0/0 to: 0.0.0.0/0\n\
-    log: connect disconnect error\n\
-}\n\
-pass {\n\
-    from: 0.0.0.0/0 to: 0.0.0.0/0\n\
-    log: connect disconnect error\n\
-}" > /etc/danted.conf
+# Configure Dante SOCKS5 proxy using heredoc
+RUN bash -c 'cat <<EOF > /etc/danted.conf
+logoutput: syslog
+internal: 0.0.0.0 port = 1080
+external: eth0
+method: username
+user.privileged: root
+user.notprivileged: nobody
+client pass {
+    from: 0.0.0.0/0 to: 0.0.0.0/0
+    log: connect disconnect error
+}
+pass {
+    from: 0.0.0.0/0 to: 0.0.0.0/0
+    log: connect disconnect error
+}
+EOF'
 
 # Expose the SOCKS5 proxy port
 EXPOSE 1080
