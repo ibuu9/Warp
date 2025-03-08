@@ -27,7 +27,11 @@ RUN curl -fsSL https://pkg.cloudflareclient.com/pubkey.gpg | gpg --yes --dearmor
 # Create necessary directories and files for WARP
 RUN mkdir -p /var/lib/cloudflare-warp \
     && touch /var/lib/cloudflare-warp/reg.json \
-    && chmod 600 /var/lib/cloudflare-warp/reg.json
+    && touch /var/lib/cloudflare-warp/settings.json \
+    && touch /var/lib/cloudflare-warp/consumer-settings.json \
+    && chmod 600 /var/lib/cloudflare-warp/reg.json \
+    && chmod 600 /var/lib/cloudflare-warp/settings.json \
+    && chmod 600 /var/lib/cloudflare-warp/consumer-settings.json
 
 # Configure Dante SOCKS5 proxy
 RUN echo -e "logoutput: syslog\n\
