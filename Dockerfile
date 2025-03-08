@@ -1,4 +1,4 @@
-# Start from an official Debian image
+# Use a minimal base image
 FROM debian:bullseye-slim
 
 # Install required dependencies
@@ -11,16 +11,22 @@ RUN apt-get update && apt-get install -y \
     && apt-get clean
 
 # Install Cloudflare Warp client (warp-cli)
-RUN curl -fsSL https://github.com/cloudflare/cloudflare-warp/releases/download/v2023.2.0/warp-linux-x86_64.tar.gz -o warp.tar.gz && \
-    tar -xvzf warp.tar.gz && \
-    mv warp /usr/local/bin/ && \
-    rm warp.tar.gz
+RUN curl -fsSL https://github.com/cloudflare/cloudflare-warp/releases/download/v2023.2.0/warp-linux-x86_64.tar.gz -o /tmp/warp.tar.gz && \
+    tar -xvzf /tmp/warp.tar.gz -C /tmp && \
+    mv /tmp/warp /usr/local/bin/ && \
+    rm /tmp/warp.tar.gz
 
-# Optional: Set environment variables (you can remove these if you are not using authentication)
+# Verify if Warp was installed successfully
+RUN warp --version
+
+# Set environment variables (optional if authentication needed)
 ENV WARP_AUTH_EMAIL="your-email@example.com"
 ENV WARP_AUTH_KEY="your-api-key"
 
-# Run the Warp client and keep the container running
+# Ensure we can run Warp commands (optional: for debugging)
+RUN warp-cli --help
+
+# Run Warp client and keep the container running
 CMD warp-cli register && \
     warp-cli connect && \
     tail -f /dev/null
