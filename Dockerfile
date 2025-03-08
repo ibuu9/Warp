@@ -10,6 +10,9 @@ RUN apt-get update && apt-get install -y \
     lsb-release \
     && apt-get clean
 
+# Test if we can reach the URL (ping or curl the release URL)
+RUN curl -fsSL https://github.com/cloudflare/cloudflare-warp/releases/download/v2023.2.0/warp-linux-x86_64.tar.gz -o /tmp/warp.tar.gz || echo "Failed to download the file."
+
 # Install Cloudflare Warp client (warp-cli)
 RUN curl -fsSL https://github.com/cloudflare/cloudflare-warp/releases/download/v2023.2.0/warp-linux-x86_64.tar.gz -o /tmp/warp.tar.gz && \
     tar -xvzf /tmp/warp.tar.gz -C /tmp && \
