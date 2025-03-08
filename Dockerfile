@@ -1,50 +1,26 @@
-# Use Ubuntu 20.04 as the base image
-FROM ubuntu:20.04
+# Start from an official Debian image, or any suitable base image
+FROM debian:bullseye-slim
 
-# Set environment variables to avoid interactive prompts during package installation
-ENV DEBIAN_FRONTEND=noninteractive
-
-# Set working directory
-WORKDIR /app
-
-# Install system dependencies
+# Install required dependencies
 RUN apt-get update && apt-get install -y \
     curl \
-    gpg \
+    wget \
+    ca-certificates \
+    iproute2 \
     lsb-release \
-    dante-server \
-    && apt-get clean \
-    && rm -rf /var/lib/apt/lists/*
+    && apt-get clean
 
-# Install Cloudflare WARP client
-RUN curl -fsSL https://pkg.cloudflareclient.com/pubkey.gpg | gpg --yes --dearmor --output /usr/share/keyrings/cloudflare-warp-archive-keyring.gpg \
-    && echo "deb [signed-by=/usr/share/keyrings/cloudflare-warp-archive-keyring.gpg] https://pkg.cloudflareclient.com/ $(lsb_release -cs) main" | tee /etc/apt/sources.list.d/cloudflare-client.list \
-    && apt-get update \
-    && apt-get install -y cloudflare-warp \
-    && apt-get clean \
-    && rm -rf /var/lib/apt/lists/*
+# Install the Cloudflare Warp client (warp-cli)
+RUN curl -fsSL https://github.com/cloudflare/cloudflare-warp/releases/download/v2023.2.0/warp-linux-x86_64.tar.gz -o warp.tar.gz && \
+    tar -xvzf warp.tar.gz && \
+    mv warp /usr/local/bin/ && \
+    rm warp.tar.gz
 
-# Configure Dante SOCKS5 proxy
-RUN echo -e "logoutput: syslog\n\
-internal: 0.0.0.0 port = 1080\n\
-external: eth0\n\
-method: username\n\
-user.privileged: root\n\
-user.notprivileged: nobody\n\
-client pass {\n\
-    from: 0.0.0.0/0 to: 0.0.0.0/0\n\
-    log: connect disconnect error\n\
-}\n\
-pass {\n\
-    from: 0.0.0.0/0 to: 0.0.0.0/0\n\
-    log: connect disconnect error\n\
-}" > /etc/danted.conf
+# Set environment variables (replace with your actual Warp credentials if needed)
+ENV WARP_AUTH_EMAIL="your-email@example.com"  # Optional: Use if required by your Warp account
+ENV WARP_AUTH_KEY="your-api-key"  # Optional: Use if required by your Warp account
 
-# Expose the SOCKS5 proxy port
-EXPOSE 1080
-
-# Start WARP and Dante SOCKS5 proxy
-CMD warp-svc & \
-    sleep 5 && \
+# Run the Warp client
+CMD warp-cli register && \
     warp-cli connect && \
-    danted -f /etc/danted.conf
+    tail -f /dev/null  # Keeps the container running after Warp connects
